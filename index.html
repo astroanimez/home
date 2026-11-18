@@ -87,6 +87,12 @@ button.tg:active{transform:none;box-shadow:none}
 .md.open .chev{transform:rotate(90deg)}
 .md:hover>td{background:rgba(70,224,200,.08)}
 .sub[hidden]{display:none}
+.btns{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+a.btn{display:inline-block;text-decoration:none;border:3px solid var(--dk);border-radius:12px;padding:12px 18px;font-weight:800;font-size:17px;background:linear-gradient(180deg,#a8f0e2,#46E0C8 55%,#1fb7a3);color:#04201c;box-shadow:0 5px 0 var(--dk);transition:transform .08s,box-shadow .08s}
+a.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--dk)}
+a.btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+textarea{width:100%;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--ink);background:#07142a;border:3px solid var(--dk);border-radius:10px;padding:10px;margin-top:8px}
+details{margin-top:12px}summary{cursor:pointer}
 .sub>td{padding:4px 8px 12px}
 table.in{font-size:14px;background:rgba(2,8,19,.4);border-radius:10px}
 table.in th{color:var(--tl)}
@@ -129,8 +135,10 @@ table.in th{color:var(--tl)}
 <h2>Yogas and doshas</h2><div class="cards" id="yg"></div>
 <h2>Chart reading</h2><div class="cards" id="rd"></div>
 <h2>Deeper AI reading</h2>
-<p class="hint">Claude reads your computed chart and writes a fuller analysis of personality, career, wealth, relationships, health, the current daśā and remedies.</p>
-<p><button class="p" id="aib" type="button" hidden>Write my AI reading</button></p>
+<p class="hint">All your chart details (planets, houses, aspects, yogas, Navāṁśa and every daśā) are packed into one request, and an AI writes an easy-to-read report on personality, career, money, relationships, health, the current daśā and remedies. Use Claude here, or open the same request in your own Gemini.</p>
+<p class="btns"><button class="p" id="aib" type="button" hidden>Write my AI reading</button><a class="btn" id="gmb" href="https://gemini.google.com/app" target="_blank" rel="noopener">Analyze with Gemini</a></p>
+<p class="hint" id="gms" role="status">Gemini button: your full chart request is copied, Gemini opens in a new tab (sign in with your Gmail there), then paste and send.</p>
+<details id="gmd"><summary class="hint">View or copy the full chart request</summary><textarea id="gmt" readonly rows="10" aria-label="Full chart request for AI"></textarea></details>
 <div class="ai" id="air" hidden></div>
 <p class="hint" style="margin-top:28px">Positions use a compact low-precision ephemeris (typically within a few arc-minutes for planets, up to about 0.3° for the Moon), mean lunar node and whole-sign houses. Readings are traditional interpretations for reflection, not predictions or professional advice.</p>
 </div></div>
@@ -252,6 +260,17 @@ o.push(`<div class="c"><b>Lagna: ${SG[c.ls]}</b><br>You come across as ${LAG[c.l
 o.push(`<div class="c"><b>Moon: ${SG[g.Mo.s]}, ${NK[g.Mo.nk]}</b><br>Emotionally, you ${MOT[g.Mo.s]}. The Moon in house ${g.Mo.h} puts your peace of mind in the area of ${HT[g.Mo.h-1]}.</div>`);
 ["Su","Ma","Me","Ju","Ve","Sa"].forEach(k=>{const p=g[k],q=dg(k,p.s);o.push(`<div class="c"><b>${PN[k]} in house ${p.h}</b> (${SG[p.s]}${q?", "+q:""}${p.rt?", retrograde":""})<br>${PN[k]} governs ${SIG[k]}. Here it works through ${HT[p.h-1]}${q=="exalted"||q=="in own sign"?" with strength and ease":q=="debilitated"?", asking for extra effort and maturity":""}${p.rt?"; retrograde turns this energy inward and slows its results":""}.</div>`)});
 o.push(`<div class="c"><b>Rahu in house ${g.Ra.h}, Ketu in house ${g.Ke.h}</b><br>Rahu pulls you toward ${HT[g.Ra.h-1]} with hunger for more; Ketu in ${HT[g.Ke.h-1]} points to detachment and past-life mastery.</div>`);return o.join("")}
+const PROMPT=`You are an experienced, kind Vedic astrologer (Jyotish). Using ONLY the computed chart data below (sidereal zodiac, Lahiri ayanamsa, whole-sign houses), write a deep but easy-to-understand report for a complete beginner. Use simple everyday English; if you must use a Sanskrit term, explain it in brackets right away. Use short paragraphs and these ## headings: Quick summary (5 lines), Personality and nature, Career and money, Love, marriage and family, Health and wellbeing, Education and children, Strengths and challenges (explain each yoga simply), Current Mahadasha and Antardasha (what to expect now and over the next 2 to 3 years), Upcoming dasha periods at a glance, Simple remedies and practical advice. Refer to the actual placements and house numbers. Stay warm and balanced: no fear-based or absolute predictions, and no medical, legal or financial instructions. Finish with one short line noting that astrology is for reflection.\n\nCHART DATA\n`;
+const sgn=i=>SG[i].replace(/^\S+ /,"");
+function fullData(nameV,c,D,dd){const g=c.g,L=[],el=(g.Mo.l-g.Su.l+360)%360,ti=Math.floor(el/12);
+L.push(`Name: ${nameV||"not given"}`,`Birth: ${dd[0]}-${String(dd[1]+1).padStart(2,"0")}-${String(dd[2]).padStart(2,"0")} at ${$("tm").value}, place ${$("pl").value||"custom coordinates"} (lat ${$("la").value}, lon ${$("lo").value}, UTC offset ${$("tz").value})`,`Today: ${new Date().toDateString()}`,"",`Lagna (Ascendant): ${sgn(c.ls)} ${dm(g.As)}, nakshatra ${NK[g.As.nk]} pada ${g.As.pd}`,`Moon sign: ${sgn(g.Mo.s)}; birth nakshatra ${NK[g.Mo.nk]} pada ${g.Mo.pd}`,`Moon phase: ${ti<15?"Shukla":"Krishna"} paksha, tithi ${ti%15==14?(ti<15?"Purnima":"Amavasya"):TI[ti%15]}; weekday ${VA[new Date(Date.UTC(...dd)).getUTCDay()]}`,"","PLANETS (D1 sign, degree, house, nakshatra, dignity, Navamsa):");
+PK.forEach(k=>{const p=g[k],q=dg(k,p.s);L.push(`- ${PLN[k]}: ${sgn(p.s)} ${dm(p)}, house ${p.h}, ${NK[p.nk]} pada ${p.pd}${q?", "+q:""}${p.rt&&k!="Ra"&&k!="Ke"?", retrograde":""}; Navamsa sign ${sgn(p.n9)}, Navamsa house ${hOf(c,9,k)}`)});
+L.push("","HOUSES:");
+for(let h=1;h<=12;h++){const i=(c.ls+h-1)%12,ld=SIGL[i],occ=PK.filter(k=>g[k].s===i).map(k=>PLN[k]),asp=PK.filter(k=>{const ph=g[k].h;return ph!==h&&(ASP[k]||[7]).includes((h-ph+12)%12+1)}).map(k=>PLN[k]);L.push(`- House ${h} (${HB[h-1]}: ${HE[h-1]}): ${sgn(i)}, lord ${PLN[ld]} sits in house ${g[ld].h} (${sgn(g[ld].s)}); planets here: ${occ.join(", ")||"none"}; aspected by: ${asp.join(", ")||"none"}`)}
+L.push("","YOGAS AND DOSHAS:");yogas(c).forEach(([a,b])=>L.push(`- ${a}: ${b}`));
+L.push("","VIMSHOTTARI DASHA (Mahadasha sequence):");D.L.forEach(x=>L.push(`- ${PLN[x.k]} ${fmt(x.a)} to ${fmt(x.b)}${x===D.cur?" (RUNNING NOW)":""}`));
+if(D.cur){L.push("",`Antardashas inside the running ${PLN[D.cur.k]} Mahadasha:`);const n=Date.now();anta(D.cur).forEach(a=>L.push(`- ${PLN[D.cur.k]}-${PLN[a.k]}: ${fmtD(a.a)} to ${fmtD(a.b)}${n>=a.a&&n<a.b?" (RUNNING NOW)":""}`))}
+return L.join("\n")}
 function render(nameV,c,dd){const g=c.g;INFO=SG[c.ls]+" Lagna";C=c;SEL=-1;draw();
 const el=(g.Mo.l-g.Su.l+360)%360,ti=Math.floor(el/12),d0=new Date(c.ms+0);
 $("pn").innerHTML=[["Lagna (Ascendant)",`${SG[c.ls]} ${dm(g.As)}`],["Janma Rashi (Moon sign)",SG[g.Mo.s]],["Janma Nakshatra",`${NK[g.Mo.nk]}, pada ${g.Mo.pd}`],["Tithi",`${ti<15?"Shukla":"Krishna"} ${ti%15==14?(ti<15?"Purnima":"Amavasya"):TI[ti%15]}`],["Vara (weekday)",VA[(new Date(Date.UTC(...dd)).getUTCDay())]],["Ayanamsa (Lahiri)",g.As&&c.ay.toFixed(3)+"°"]].map(([a,b])=>`<div class="c"><span class="hint">${a}</span><br><b>${b}</b></div>`).join("");
@@ -263,7 +282,7 @@ $("ad").textContent=D.cur?`Running now: ${PN[D.cur.k]} mahadasha${D.ant?` with $
 $("yg").innerHTML=yogas(c).map(([a,b])=>`<div class="c"><b>${a}</b><br>${b}</div>`).join("");
 $("rd").innerHTML=reading(c);$("out").style.display="block";
 c.summary={name:nameV,lagna:SG[c.ls],moon:SG[g.Mo.s]+" / "+NK[g.Mo.nk],grahas:PK.map(k=>`${PN[k]}: ${SG[g[k].s]} h${g[k].h} ${NK[g[k].nk]}${dg(k,g[k].s)?" "+dg(k,g[k].s):""}${g[k].rt&&k!="Ra"&&k!="Ke"?" R":""}`),dasha:D.cur?`${D.cur.k}/${D.ant?D.ant.k:""} until ${fmt(D.cur.b)}`:"",yogas:yogas(c).map(y=>y[0])};
-$("air").hidden=true;$("out").scrollIntoView({behavior:"smooth",block:"start"})}
+c.full=fullData(nameV,c,D,dd);$("gmt").value=PROMPT+c.full;$("gms").textContent="Gemini button: your full chart request is copied, Gemini opens in a new tab (sign in with your Gmail there), then paste and send.";$("gmd").open=false;$("air").hidden=true;$("out").scrollIntoView({behavior:"smooth",block:"start"})}
 $("f").addEventListener("submit",e=>{e.preventDefault();$("er").textContent="";
 try{const[y,m,d]=$("dt").value.split("-").map(Number),[H,M]=$("tm").value.split(":").map(Number);
 const c=calc(y,m,d,H,M,+$("tz").value,+$("la").value,+$("lo").value);
@@ -271,6 +290,8 @@ if(Object.values(c.g).some(p=>isNaN(p.l)))throw 0;render($("nm").value.trim(),c,
 const md=t=>{let h="",ul=false;esc(t).split("\n").forEach(l=>{l=l.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");if(/^\s*[-*] /.test(l)){if(!ul){h+="<ul>";ul=true}h+="<li>"+l.replace(/^\s*[-*] /,"")+"</li>"}else{if(ul){h+="</ul>";ul=false}h+=/^#{1,4} /.test(l)?"<h3>"+l.replace(/^#+ /,"")+"</h3>":l.trim()?"<p>"+l+"</p>":""}});return h+(ul?"</ul>":"")};
 let SM=null;(async()=>{try{SM=await claude.use("sample");if(SM)$("aib").hidden=false}catch(e){}})();
 $("aib").onclick=async()=>{if(!C||!SM)return;const b=$("aib"),o=$("air");b.disabled=true;o.hidden=false;o.textContent="Reading your chart…";
-const pr=`You are an experienced Vedic (Jyotish) astrologer. Using only this computed sidereal chart (Lahiri, whole-sign houses, h = house number, R = retrograde), write a warm, specific, balanced reading in about 600 words. Use these ## headings: Personality and temperament, Career and finances, Relationships and family, Health and wellbeing, Current dasha period, Gentle remedies and advice. Reference actual placements, yogas and dasha. Avoid fear-based or absolute predictions and avoid medical or financial directives. Chart: ${JSON.stringify(C.summary)}`;
+const pr=PROMPT+C.full;
 try{await SM(pr,{modelTier:"default",cache:false,onText:({text})=>{o.innerHTML=md(text)}})}catch(e){if(!o.textContent||o.textContent.startsWith("Reading"))o.textContent=e&&e.code=="not_granted"?"Permission was declined, so no AI reading was written.":"The AI reading could not be generated right now. Try again in a moment."}b.disabled=false;b.textContent="Write it again"};
+$("gmb").addEventListener("click",e=>{if(!C||!C.full){e.preventDefault();return}const t=PROMPT+C.full,s=$("gms");$("gmt").value=t;const fail=()=>{s.textContent="Could not copy automatically. Open “View or copy the full chart request” below, copy it, then paste it into Gemini.";$("gmd").open=true};
+try{navigator.clipboard.writeText(t).then(()=>{s.textContent="Copied! In the Gemini tab, sign in with your Gmail, paste (Ctrl+V or long-press) and press send."},fail)}catch(x){fail()}});
 </script></body></html>
